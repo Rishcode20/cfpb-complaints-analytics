@@ -2,3 +2,10 @@
 .env
 .venv/
 __pycache__/
+.venv/
+.env
+data/complaints.csv
+data/sample.csv
+data/embeddings.npy
+data/clustered.csv
+data/themes.csv
