@@ -62,3 +62,43 @@ Run the dashboard:
 ## Data source
 
 CFPB Consumer Complaint Database (public data).
+
+## Complaint Themes (NLP)
+
+Clusters credit card complaint narratives into themes using sentence embeddings and KMeans.
+
+**Data.** 5,771 credit card complaints with narratives (January to February 2026) from the CFPB's complaint narratives archive in its FOIA Reading Room. The CFPB stopped publishing narratives in the live Consumer Complaint Database in August 2026, so the standard export no longer includes them.
+
+**Method** (scripts in `nlp/`)
+1. `00_filter.py`: filter the archive file to credit card complaints that have a narrative.
+2. `02_embed.py`: embed narratives with `all-MiniLM-L6-v2` (sentence-transformers) and compare K = 6, 8, 10, 12, 15.
+3. `03_cluster.py`: cluster with KMeans (K = 10) and extract per-cluster keywords with TF-IDF.
+4. `04_samples.py`, `05_save_themes.py`: read sampled complaints per cluster and label each theme by hand.
+
+**Choosing K.** Silhouette scores were low and nearly flat (0.033 to 0.040 across all values of K), which is typical for overlapping text topics, so they could not pick K. I chose K = 10 because the clusters were interpretable.
+
+**Themes**
+
+| Theme | Complaints | Share |
+|---|---|---|
+| Refunds and merchant disputes | 884 | 15.3% |
+| Late fees, payments and interest charges | 878 | 15.2% |
+| Account opening and card delivery problems | 747 | 12.9% |
+| Fraud and unauthorized charge disputes | 740 | 12.8% |
+| Credit reporting errors and legal-style disputes | 622 | 10.8% |
+| Rewards, bonuses and promotional offers | 439 | 7.6% |
+| Capital One account restrictions and closures | 400 | 6.9% |
+| Citibank disputes, closures and payments | 391 | 6.8% |
+| Deferred interest and billing errors | 376 | 6.5% |
+| Identity theft and credit report removal | 294 | 5.1% |
+
+**Evaluation.** About 49% of each cluster's complaints share its most common CFPB Issue label (48.5%). This is fairly low, which makes sense because the clusters group by meaning and not by CFPB's fine-grained categories.
+
+**Findings and limits**
+- Two clusters follow a single company (Citibank, Capital One), so the embeddings group partly by brand name.
+- Formal complaints that cite statutes (FCBA, FCRA, Regulation Z) group together, so writing style affects clusters as well as topic.
+- One cluster (account opening and card delivery) is a mixed catch-all.
+- Labels were assigned manually from keywords and four sampled complaints per cluster, so they are my judgment, not a validated taxonomy.
+- Keyword extraction needed two fixes: scoring terms per cluster surfaced generic words, and removing them surfaced rare brand names. Scoring per complaint with a minimum document frequency (30) and bigrams gave readable keywords.
+
+**Reproducing.** The `data/` folder is not tracked. Download a narratives export from the CFPB archive, save it as `data/narr_2026.csv`, and run the scripts in order.
